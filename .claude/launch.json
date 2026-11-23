@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "roadmap-api",
+      "runtimeExecutable": "/Users/rigidniy/.dotnet/dotnet",
+      "runtimeArgs": ["run", "--project", "src/Roadmap.Api", "--launch-profile", "http"],
+      "port": 5191
+    }
+  ]
+}

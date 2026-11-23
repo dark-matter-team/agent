@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roadmap Agent Demo</title>
+<!-- Demo page for trying the agent. Served only in Development. This is not the production frontend. -->
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --text: #1d2330; --muted: #6b7385; --border: #dfe3ea;
+    --accent: #3b5bdb; --known: #2f9e44; --refresh: #e67700; --todo: #3b5bdb; --line: #b8c0cf;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12151b; --panel: #1b1f27; --text: #e6e9ef; --muted: #98a0b3; --border: #2c323d;
+      --accent: #748ffc; --known: #51cf66; --refresh: #ffa94d; --todo: #748ffc; --line: #3d4554;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .layout { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 4px; }
+  input, textarea, select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
+  textarea { min-height: 70px; resize: vertical; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .check { display: flex; gap: 8px; align-items: center; margin-top: 12px; color: var(--text); font-size: 14px; }
+  .check input { width: auto; }
+  button { margin-top: 16px; width: 100%; padding: 10px; border: 0; border-radius: 8px; background: var(--accent); color: #fff; font: 600 15px system-ui; cursor: pointer; }
+  button:disabled { opacity: .6; cursor: progress; }
+  .status { margin-top: 12px; font-size: 14px; color: var(--muted); min-height: 20px; }
+  .status.error { color: #e03131; }
+  .summary h2 { margin: 0 0 6px; font-size: 18px; }
+  .meta { display: flex; gap: 16px; flex-wrap: wrap; color: var(--muted); font-size: 13px; margin-top: 8px; }
+  .legend { display: flex; gap: 14px; font-size: 13px; color: var(--muted); margin: 14px 0 0; flex-wrap: wrap; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+  .graph-wrap { position: relative; overflow-x: auto; margin-top: 16px; padding-bottom: 8px; }
+  .graph { position: relative; display: flex; gap: 44px; min-width: min-content; padding: 4px; }
+  .graph svg { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+  .col { display: flex; flex-direction: column; gap: 14px; justify-content: flex-start; width: 210px; flex: none; }
+  .col-title { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); text-align: center; }
+  .card { position: relative; background: var(--panel); border: 1px solid var(--border); border-left: 4px solid var(--todo); border-radius: 10px; padding: 10px 12px; cursor: pointer; }
+  .card.known { border-left-color: var(--known); opacity: .75; }
+  .card.refresh { border-left-color: var(--refresh); }
+  .card .t { font-weight: 600; font-size: 14px; }
+  .card .h { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .card .more { display: none; font-size: 13px; margin-top: 8px; color: var(--text); }
+  .card.open .more { display: block; }
+  .card .more p { margin: 0 0 6px; }
+  .card .why { color: var(--muted); }
+  .card a { color: var(--accent); word-break: break-word; }
+  .empty { color: var(--muted); text-align: center; padding: 40px 0; }
+  pre { white-space: pre-wrap; font-size: 12px; max-height: 320px; overflow: auto; background: var(--bg); padding: 10px; border-radius: 8px; }
+  details { margin-top: 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Roadmap Agent</h1>
+  <p class="sub">Demo: questionnaire → agent → learning graph. <span id="info"></span></p>
+
+  <div class="layout">
+    <form class="panel" id="form">
+      <label for="goal">Goal</label>
+      <input id="goal" value="Data Engineer" required maxlength="200">
+
+      <label for="skills">What I already know (skill: level 0–3, comma-separated)</label>
+      <textarea id="skills">Python: 1, SQL: 2, Git: 3, Docker: 1</textarea>
+
+      <label for="background">Background</label>
+      <textarea id="background">2 years of C# backend development</textarea>
+
+      <div class="row">
+        <div>
+          <label for="hours">Hours per week</label>
+          <input id="hours" type="number" min="1" max="80" value="10">
+        </div>
+        <div>
+          <label for="deadline">Deadline, weeks</label>
+          <input id="deadline" type="number" min="1" max="260" placeholder="—">
+        </div>
+      </div>
+
+      <label for="lang">Language</label>
+      <select id="lang"><option value="en">English</option><option value="uk">Ukrainian</option></select>
+
+      <label class="check"><input id="free" type="checkbox"> Free materials only</label>
+
+      <button id="go" type="submit">Build roadmap</button>
+      <div class="status" id="status"></div>
+    </form>
+
+    <section class="panel" id="result">
+      <div class="empty">Fill in the questionnaire and click “Build roadmap”.</div>
+    </section>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const statusEl = $("status");
+
+fetch("/api/info").then(r => r.json()).then(i => {
+  $("info").textContent = `Model: ${i.model} (${i.free ? "free" : "paid"}) · web search: ${i.web_search}`;
+}).catch(() => {});
+
+function parseSkills(text) {
+  return text.split(",").map(s => s.trim()).filter(Boolean).map(s => {
+    const [name, level] = s.split(":").map(x => x.trim());
+    return { name, level: Math.max(0, Math.min(3, parseInt(level ?? "1", 10) || 0)) };
+  });
+}
+
+function setStatus(text, isError = false) {
+  statusEl.textContent = text;
+  statusEl.className = "status" + (isError ? " error" : "");
+}
+
+$("form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const profile = {
+    goal: $("goal").value.trim(),
+    skills: parseSkills($("skills").value),
+    background: $("background").value.trim() || null,
+    hours_per_week: parseInt($("hours").value, 10),
+    deadline_weeks: $("deadline").value ? parseInt($("deadline").value, 10) : null,
+    language: $("lang").value,
+    free_resources_only: $("free").checked,
+  };
+
+  $("go").disabled = true;
+  setStatus("Sending…");
+  try {
+    const res = await fetch("/api/roadmaps", {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(profile),
+    });
+    if (res.status === 429) throw new Error("Too many requests: the limit is 5 generations per 10 minutes.");
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.errors ? Object.values(body.errors).flat().join(" ") : (body.detail || "Error"));
+    await poll(body.id, profile);
+  } catch (err) {
+    setStatus(err.message, true);
+  } finally {
+    $("go").disabled = false;
+  }
+});
+
+async function poll(id, profile) {
+  const started = Date.now();
+  while (true) {
+    const job = await (await fetch(`/api/roadmaps/${id}`)).json();
+    const secs = Math.round((Date.now() - started) / 1000);
+    if (job.status === "done") { setStatus(`Done in ${secs} s.`); render(job, profile); return; }
+    if (job.status === "failed") throw new Error(job.error || "Could not build the roadmap.");
+    setStatus(`${job.progress || job.status} (${secs} s)`);
+    await new Promise(r => setTimeout(r, 1000));
+  }
+}
+
+function el(tag, attrs = {}, ...children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") node.className = v; else node.setAttribute(k, v);
+  }
+  for (const c of children) node.append(c);
+  return node;
+}
+
+function safeUrl(url) {
+  try { const u = new URL(url); return u.protocol === "https:" || u.protocol === "http:" ? u.href : null; }
+  catch { return null; }
+}
+
+// A node's stage = the length of the longest dependency chain leading to it.
+function layers(nodes) {
+  const byId = new Map(nodes.map(n => [n.id, n]));
+  const depth = new Map();
+  const visit = (id, seen = new Set()) => {
+    if (depth.has(id)) return depth.get(id);
+    if (seen.has(id)) return 0;
+    seen.add(id);
+    const pre = byId.get(id).prerequisites.filter(p => byId.has(p));
+    const d = pre.length ? Math.max(...pre.map(p => visit(p, seen) + 1)) : 0;
+    depth.set(id, d);
+    return d;
+  };
+  nodes.forEach(n => visit(n.id));
+  const cols = [];
+  nodes.forEach(n => (cols[depth.get(n.id)] ??= []).push(n));
+  return cols;
+}
+
+const STATUS = { known: "already know", refresh: "refresh", todo: "to learn" };
+
+function render(job, profile) {
+  const r = job.roadmap;
+  const weeks = profile.hours_per_week ? Math.ceil(r.total_hours / profile.hours_per_week) : "—";
+  const result = $("result");
+  result.replaceChildren();
+
+  const summary = el("div", { class: "summary" },
+    el("h2", {}, r.goal),
+    el("div", {}, r.summary),
+    el("div", { class: "meta" },
+      el("span", {}, `Nodes: ${r.nodes.length}`),
+      el("span", {}, `Left to learn: ${r.total_hours} h`),
+      el("span", {}, `≈ ${weeks} weeks at ${profile.hours_per_week} h/week`),
+      el("span", {}, `Sources: ${r.sources.length}`)),
+    el("div", { class: "legend" },
+      ...Object.entries(STATUS).map(([k, v]) =>
+        el("span", {}, el("span", { class: "dot", style: `background: var(--${k})` }), v)),
+      el("span", {}, "· click a card to expand it")));
+  result.append(summary);
+
+  if (job.warnings?.length) result.append(el("div", { class: "meta" }, job.warnings.join(" · ")));
+
+  const graph = el("div", { class: "graph" });
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  graph.append(svg);
+  const cards = new Map();
+
+  layers(r.nodes).forEach((col, i) => {
+    const column = el("div", { class: "col" }, el("div", { class: "col-title" }, `Stage ${i + 1}`));
+    col.forEach(n => {
+      const more = el("div", { class: "more" },
+        el("p", {}, n.description),
+        el("p", { class: "why" }, n.why));
+      n.resources.forEach(res => {
+        const href = safeUrl(res.url);
+        const line = el("p", {}, `${res.free ? "free" : "paid"} · ${res.type}: `);
+        line.append(href ? el("a", { href, target: "_blank", rel: "noopener noreferrer" }, res.title) : res.title);
+        more.append(line);
+      });
+      const card = el("div", { class: `card ${n.status}`, title: n.id },
+        el("div", { class: "t" }, n.title),
+        el("div", { class: "h" }, `${STATUS[n.status]} · ${n.estimated_hours} h`),
+        more);
+      card.addEventListener("click", e => {
+        if (e.target.tagName === "A") return;
+        card.classList.toggle("open");
+        drawLines();
+      });
+      cards.set(n.id, card);
+      column.append(card);
+    });
+    graph.append(column);
+  });
+
+  const wrap = el("div", { class: "graph-wrap" }, graph);
+  result.append(wrap);
+  result.append(el("details", {}, el("summary", {}, "API response JSON"), el("pre", {}, JSON.stringify(job, null, 2))));
+
+  function drawLines() {
+    const box = graph.getBoundingClientRect();
+    svg.setAttribute("width", graph.scrollWidth);
+    svg.setAttribute("height", graph.scrollHeight);
+    svg.replaceChildren();
+    r.nodes.forEach(n => n.prerequisites.forEach(p => {
+      const a = cards.get(p)?.getBoundingClientRect();
+      const b = cards.get(n.id)?.getBoundingClientRect();
+      if (!a || !b) return;
+      const x1 = a.right - box.left, y1 = a.top + a.height / 2 - box.top;
+      const x2 = b.left - box.left, y2 = b.top + b.height / 2 - box.top;
+      const mid = (x1 + x2) / 2;
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", `M${x1},${y1} C${mid},${y1} ${mid},${y2} ${x2},${y2}`);
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", "var(--line)");
+      path.setAttribute("stroke-width", "2");
+      svg.append(path);
+    }));
+  }
+
+  requestAnimationFrame(drawLines);
+  window.onresize = drawLines;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Roadmap.Agent/Roadmap.Agent.csproj" />
+    <Project Path="src/Roadmap.Api/Roadmap.Api.csproj" />
+    <Project Path="src/Roadmap.Cli/Roadmap.Cli.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Roadmap.Agent.Tests/Roadmap.Agent.Tests.csproj" />
+  </Folder>
+</Solution>

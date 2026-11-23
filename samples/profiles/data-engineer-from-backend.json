@@ -1,0 +1,15 @@
+{
+  "goal": "Data Engineer",
+  "skills": [
+    { "name": "C#", "level": 3 },
+    { "name": "SQL", "level": 2 },
+    { "name": "Git", "level": 3 },
+    { "name": "Docker", "level": 1 },
+    { "name": "Python", "level": 1 }
+  ],
+  "background": "2 years of C# / ASP.NET backend development, worked with PostgreSQL",
+  "hours_per_week": 10,
+  "deadline_weeks": 26,
+  "language": "en",
+  "free_resources_only": false
+}

@@ -1,0 +1,26 @@
+@host = http://localhost:5191
+
+### Start generating a roadmap
+# @name create
+POST {{host}}/api/roadmaps
+Content-Type: application/json
+
+{
+  "goal": "Data Engineer",
+  "skills": [
+    { "name": "Python", "level": 2 },
+    { "name": "SQL", "level": 3 },
+    { "name": "Git", "level": 3 }
+  ],
+  "background": "2 years of C# backend development",
+  "hours_per_week": 10,
+  "deadline_weeks": 24,
+  "language": "en",
+  "free_resources_only": false
+}
+
+### Get status and result (repeat until status is done/failed)
+GET {{host}}/api/roadmaps/{{create.response.body.id}}
+
+### Check that the service is alive
+GET {{host}}/health

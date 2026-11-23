@@ -1,0 +1,14 @@
+{
+  "goal": "ML Engineer",
+  "skills": [
+    { "name": "Python", "level": 3 },
+    { "name": "Linear algebra", "level": 2 },
+    { "name": "Probability theory", "level": 2 },
+    { "name": "SQL", "level": 1 }
+  ],
+  "background": "3rd-year applied mathematics student",
+  "hours_per_week": 15,
+  "deadline_weeks": 40,
+  "language": "en",
+  "free_resources_only": true
+}
